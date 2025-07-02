@@ -1,5 +1,94 @@
 ---
 title: "Two-Parameters"
 format: html
+execute: 
+  echo: false
 ---
 
+```{r}
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(primer.data))
+suppressPackageStartupMessages(library(tidymodels))
+library(broom)
+```
+
+$$Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \cdots + \beta_n X_n + \epsilon$$
+
+with $\epsilon \sim \mathcal{N}(0, \sigma^2)$.
+
+
+```{r}
+set.seed(10)
+
+x <- nhanes |>
+  filter(age >= 18 & age <= 27) |>
+  select(height, sex) |>
+  drop_na() |>
+  slice_sample(n = 50) 
+```
+
+People vary in height. Using 2009‑2011 NHANES data we estimate the average height of new recruits to aid in ordering uniforms before training. 
+
+The distribution of adult heights may have changed since 2011 when the data was collected and estimates obtained using this dataset could render our estimation biased. 
+
+
+We use a sample of 50 heights to build a model that gives us the DGP. The parameter estimates from the model are
+
+```{r}
+#| cache: true
+set.seed(10)
+x <- nhanes |>
+  filter(age >= 18 & age <= 27) |>
+  select(height, sex) |>
+  drop_na() |>
+  slice_sample(n = 50) 
+
+fit_height <- linear_reg() |>
+  set_engine("lm") |>
+  fit(height ~ sex, data = x)
+```
+
+```{r}
+# linear_reg() |>
+#  set_engine("lm") |>
+#  fit(height ~ sex, data = x) |>
+# tidy(conf.int = TRUE)
+```
+```{r}
+library(knitr)
+
+# Coefficient table
+coef_table <- data.frame(
+  Term = c("(Intercept)", "sexMale"),
+  Estimate = c(162.18, 15.94)
+)
+
+kable(
+  coef_table,
+  caption = "Table: Coefficients from Linear Model Predicting Height by Sex",
+  col.names = c("Term", "Estimate"),
+  digits = 2,
+  align = "lc"
+)
+```
+
+
+ We then compare your actual data (in green) with data that has been simulated from the fitted model, i.e., from the data generating mechanism. 
+
+```{r}
+suppressPackageStartupMessages(library(easystats)) # only for console
+
+
+check_predictions(extract_fit_engine(fit_height))
+```
+
+In this case, the distribution of heights in our data closely matches the distributions in the data simulated from our model. 
+
+Our prediction equation with estimated coefficients from the fitted model can be written as 
+$$\hat{\text{height}} = 162.18 + 15.94 \cdot \text{sexMale}$$
+
+
+```{r}
+#| cache: true
+
+```

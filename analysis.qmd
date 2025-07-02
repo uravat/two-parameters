@@ -10,11 +10,8 @@ suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(primer.data))
 suppressPackageStartupMessages(library(tidymodels))
 library(broom)
+suppressPackageStartupMessages(library(marginaleffects))
 ```
-
-$$Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \cdots + \beta_n X_n + \epsilon$$
-
-with $\epsilon \sim \mathcal{N}(0, \sigma^2)$.
 
 
 ```{r}
@@ -27,12 +24,7 @@ x <- nhanes |>
   slice_sample(n = 50) 
 ```
 
-People vary in height. Using 2009‑2011 NHANES data we estimate the average height of new recruits to aid in ordering uniforms before training. 
 
-The distribution of adult heights may have changed since 2011 when the data was collected and estimates obtained using this dataset could render our estimation biased. 
-
-
-We use a sample of 50 heights to build a model that gives us the DGP. The parameter estimates from the model are
 
 ```{r}
 #| cache: true
@@ -46,7 +38,70 @@ x <- nhanes |>
 fit_height <- linear_reg() |>
   set_engine("lm") |>
   fit(height ~ sex, data = x)
+
+
 ```
+
+```{r fig.height=7, fig.width=7}
+#| warning: false
+library(marginaleffects)
+library(ggplot2)
+library(dplyr)
+library(scales)
+library(glue)
+
+# 1. Get predictions from the fitted model
+preds <- plot_predictions(fit_height, condition = "sex", draw = FALSE) |>
+  select(sex, estimate, conf.low, conf.high) |>
+  rename(lower = conf.low, upper = conf.high)
+
+# 2. Compute male–female gap for subtitle (optional)
+gap_cm <- preds |>
+  arrange(sex) |>
+  summarise(gap = abs(diff(estimate))) |>
+  pull(gap) |>
+  round(1)
+
+# 3. Plot
+ggplot(preds, aes(x = sex, y = estimate, fill = sex)) +
+  geom_col(width = 0.45) +
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.12, linewidth = 0.8) +
+  geom_text(aes(label = round(estimate, 1)), vjust = -0.8, size = 4.2) +
+  scale_fill_manual(values = c("Female" = "firebrick", "Male" = "steelblue"), guide = "none") +
+  scale_y_continuous(
+    name = "Predicted height (cm)",
+    limits = c(150, 188),
+    breaks = seq(150, 185, 5)
+  ) +
+  labs(
+    title = "Predicted Height by Sex (NHANES 2009–2011)",
+    subtitle = glue("Males are predicted to be ~{gap_cm} cm taller than females (95 % CIs shown)"),
+    x = NULL,
+    caption = "Source: NHANES 2009–2011; linear model Height ~ Sex"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title    = element_text(face = "bold"),
+    plot.subtitle = element_text(margin = margin(b = 8))
+  )
+```
+People vary in height. Using 2009‑2011 NHANES data we estimate the average height of new recruits to aid in ordering uniforms before training. 
+
+The distribution of adult heights may have changed since 2011 when the data was collected and estimates obtained using this dataset could render our estimation biased. 
+
+We model height as a normally distributed random variable and we use a linear regression model for coefficients with normal errors to get our data generating process. Using the data generating process, we estimate that the average predicted height for males is approximately 178 cm and for females is 162 cm, with a 95% confidence interval for the male–female height gap being between 12 cm to 19 cm.
+
+The estimates for male and female heights might be biased if the sample is not representative of the broader population since the heights may have changed for the new recruits. Additionally, if height reporting includes measurement error, that could affect the results. A more robust estimate might involve adjusting for age or ethnicity as covariates. Including these in the model could change the predicted gap and potentially narrow the confidence interval
+
+## Details
+
+Our model is a linear regression model 
+
+$$Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \cdots + \beta_n X_n + \epsilon$$
+
+with $\epsilon \sim \mathcal{N}(0, \sigma^2)$.
+
+We use a sample of 50 heights to build a model that gives us the DGP. The parameter estimates from the model are
 
 ```{r}
 # linear_reg() |>
@@ -55,21 +110,29 @@ fit_height <- linear_reg() |>
 # tidy(conf.int = TRUE)
 ```
 ```{r}
+# nice table for QMD from output of tidy above
+# library(knitr)
+
+# # Coefficient table
+# coef_table <- data.frame(
+#   Term = c("(Intercept)", "sexMale"),
+#   Estimate = c(162.18, 15.94)
+# )
+
+# kable(
+#   coef_table,
+#   caption = "Table: Coefficients from Linear Model Predicting Height by Sex",
+#   col.names = c("Term", "Estimate"),
+#   digits = 2,
+#   align = "lc"
+# )
 library(knitr)
 
-# Coefficient table
-coef_table <- data.frame(
-  Term = c("(Intercept)", "sexMale"),
-  Estimate = c(162.18, 15.94)
-)
-
-kable(
-  coef_table,
-  caption = "Table: Coefficients from Linear Model Predicting Height by Sex",
-  col.names = c("Term", "Estimate"),
-  digits = 2,
-  align = "lc"
-)
+tidy(fit_height, conf.int = TRUE) |>
+  select(term, estimate, conf.low, conf.high) |>
+  kable(
+    caption = "Estimates and 95% Confidence Intervals for Parameters\nSource: NHANES 2009–2011"
+  )
 ```
 
 
@@ -88,7 +151,18 @@ Our prediction equation with estimated coefficients from the fitted model can be
 $$\hat{\text{height}} = 162.18 + 15.94 \cdot \text{sexMale}$$
 
 
-```{r}
-#| cache: true
+Using this equation, we can estimate the average height of females is 162.18 and that of males is `r 162.18 + 15.94`
 
+
+```{r}
+# working in console to get a plot for final predictions from dgm 
+#tidy(fit_height, conf.int = TRUE) #in console for AI
+#predictions(fit_height) # in console Exercise 7 temperance
+#avg_predictions(fit_height) 
+#avg_predictions(fit_height, by = "sex")
+#plot_predictions(fit_height, condition = "sex")
+#plot_predictions(fit_height, condition = "sex", draw = FALSE)
 ```
+
+
+

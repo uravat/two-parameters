@@ -92,29 +92,49 @@ window.Quarto = {
 </header>
 
 
-<p><span class="math display">\[Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \cdots + \beta_n X_n + \epsilon\]</span></p>
-<p>with <span class="math inline">\(\epsilon \sim \mathcal{N}(0, \sigma^2)\)</span>.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="analysis_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
 <p>People vary in height. Using 2009‑2011 NHANES data we estimate the average height of new recruits to aid in ordering uniforms before training.</p>
 <p>The distribution of adult heights may have changed since 2011 when the data was collected and estimates obtained using this dataset could render our estimation biased.</p>
+<p>We model height as a normally distributed random variable and we use a linear regression model for coefficients with normal errors to get our data generating process. Using the data generating process, we estimate that the average predicted height for males is approximately 178 cm and for females is 162 cm, with a 95% confidence interval for the male–female height gap being between 12 cm to 19 cm.</p>
+<p>The estimates for male and female heights might be biased if the sample is not representative of the broader population since the heights may have changed for the new recruits. Additionally, if height reporting includes measurement error, that could affect the results. A more robust estimate might involve adjusting for age or ethnicity as covariates. Including these in the model could change the predicted gap and potentially narrow the confidence interval</p>
+<section id="details" class="level2">
+<h2 class="anchored" data-anchor-id="details">Details</h2>
+<p>Our model is a linear regression model</p>
+<p><span class="math display">\[Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \cdots + \beta_n X_n + \epsilon\]</span></p>
+<p>with <span class="math inline">\(\epsilon \sim \mathcal{N}(0, \sigma^2)\)</span>.</p>
 <p>We use a sample of 50 heights to build a model that gives us the DGP. The parameter estimates from the model are</p>
 <div class="cell">
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
-<caption>Table: Coefficients from Linear Model Predicting Height by Sex</caption>
+<caption>Estimates and 95% Confidence Intervals for Parameters Source: NHANES 2009–2011</caption>
 <thead>
 <tr class="header">
-<th style="text-align: left;">Term</th>
-<th style="text-align: center;">Estimate</th>
+<th style="text-align: left;">term</th>
+<th style="text-align: right;">estimate</th>
+<th style="text-align: right;">conf.low</th>
+<th style="text-align: right;">conf.high</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">(Intercept)</td>
-<td style="text-align: center;">162.18</td>
+<td style="text-align: right;">162.17778</td>
+<td style="text-align: right;">159.7216</td>
+<td style="text-align: right;">164.63394</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">sexMale</td>
-<td style="text-align: center;">15.94</td>
+<td style="text-align: right;">15.93961</td>
+<td style="text-align: right;">12.3182</td>
+<td style="text-align: right;">19.56102</td>
 </tr>
 </tbody>
 </table>
@@ -125,13 +145,15 @@ window.Quarto = {
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="analysis_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="analysis_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
 </div>
 <p>In this case, the distribution of heights in our data closely matches the distributions in the data simulated from our model.</p>
 <p>Our prediction equation with estimated coefficients from the fitted model can be written as <span class="math display">\[\hat{\text{height}} = 162.18 + 15.94 \cdot \text{sexMale}\]</span></p>
+<p>Using this equation, we can estimate the average height of females is 162.18 and that of males is 178.12</p>
+</section>
 
 </main>
 <!-- /main column -->
